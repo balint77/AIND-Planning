@@ -323,18 +323,15 @@ class PlanningGraph():
         self.a_levels.append(set())
         pre_s_level = self.s_levels[level]
         pre_s_level_nodes = {elem: elem for elem in pre_s_level}
-        print('\n***',level,'add actions, previous states', *pre_s_level_nodes)
         for action in self.all_actions:
             action_node = PgNode_a(action)
             if not action_node.prenodes.issubset(pre_s_level):
                 continue
             for pre_node in action_node.prenodes:
                 pre_s_level_node = pre_s_level_nodes.get(pre_node)
-                print('adding action',action_node,'to state',pre_s_level_node)
                 pre_s_level_node.children.add(action_node)
                 action_node.parents.add(pre_s_level_node)
             self.a_levels[level].add(action_node)
-            print('added action', action_node)
         return
 
 
@@ -358,7 +355,6 @@ class PlanningGraph():
         if len(self.s_levels) != level:
             raise Exception('State level inconsistency, expected {} but found {}'.format(level, len(self.s_levels)))
         pre_a_level = self.a_levels[level - 1]
-        print('\n***',level,'add states, previous actions', *pre_a_level)
         new_s_nodes = {}
         for action_node in pre_a_level:
             for eff_node in action_node.effnodes:
@@ -366,11 +362,8 @@ class PlanningGraph():
                 if s_node is None:
                     s_node = eff_node
                     new_s_nodes[s_node] = s_node
-                    print('creating', s_node)
                 s_node.parents.add(action_node)
                 action_node.children.add(s_node)
-                print('adding state',s_node,'to action',action_node)
-        print('new states', *set(new_s_nodes.values()))
         self.s_levels.append(set(new_s_nodes.values()))
         return
 
@@ -570,16 +563,11 @@ class PlanningGraph():
         goal_met = {}
         for g in self.problem.goal:
             goal_met[g] = max_level
-        print("goal cost before",*goal_met.items())
         for level_num, s_level in enumerate(self.s_levels):
-            print("level",level_num,"with",*s_level)
             for node in s_level:
                 node_expr = self.nodeToExpression(node)
-                print("comparing",node_expr,"to",goal_met.keys())
                 if node_expr in goal_met and level_num < goal_met.get(node.symbol, max_level):
-                    print("found", node.symbol, "goal on", level_num)
                     goal_met[node.symbol] = level_num
-        print("goal cost after",*goal_met.items())
         for cost in goal_met.values():
             level_sum += cost
         return level_sum
